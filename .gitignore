@@ -1,0 +1,15 @@
+node_modules/
+.env
+*.log
+*.tgz
+*.zip
+config.json
+state.json
+corpus/
+.qq-inbox/
+.dsh-contact-style.md
+contact-style.md
+coverage/
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,0 +1,28 @@
+# QQ private-message channel for dsh WebUI.
+- insert:
+    - id: qq-channel
+      name: dsh-qq-channel
+      config:
+        enabled: true
+        websocketUrl: !!js process.env.DSH_QQ_WS_URL || 'ws://127.0.0.1:3001'
+        accessToken: !!js process.env.DSH_QQ_TOKEN || ''
+        allowedContacts: !!js >-
+          (process.env.DSH_QQ_CONTACTS || '').split(',').map((value) => value.trim()).filter(Boolean)
+        workspacePath: !!js process.env.DSH_QQ_WORKSPACE || process.env.HOME + '/dsh-work/qq-channel-workspace'
+        workspaceTitle: QQ 渠道
+        agentPreset: !!js process.env.DSH_QQ_AGENT_PRESET || 'router-auto'
+        fallbackAgentPresets: !!js >-
+          (process.env.DSH_QQ_FALLBACK_PRESETS || 'router-standard,standard,minimal').split(',').map((value) => value.trim()).filter(Boolean)
+        agentProvider: !!js process.env.DSH_QQ_AGENT_PROVIDER || 'deepseek-official'
+        agentModel: !!js process.env.DSH_QQ_AGENT_MODEL || 'deepseek-v4-flash-vision-exp'
+        agentReasoningEffort: !!js process.env.DSH_QQ_REASONING_EFFORT || 'max'
+        localConfigFile: !!js process.env.DSH_QQ_CONFIG || process.env.HOME + '/.dsh/qq-channel/config.json'
+        stateFile: !!js process.env.DSH_QQ_STATE || process.env.HOME + '/.dsh/qq-channel/state.json'
+        stylePromptFile: !!js process.env.DSH_QQ_STYLE_PROMPT || process.env.HOME + '/dsh-work/qq-channel-workspace/.dsh-contact-style.md'
+        emojiRoot: !!js process.env.DSH_QQ_EMOJI_ROOT || ''
+        botSelfId: !!js process.env.DSH_QQ_SELF_ID || ''
+        reconnectMs: 5000
+        actionTimeoutMs: 15000
+        maxAttachmentBytes: 52428800
+        maxImageBytes: 20971520
+        filePreviewBytes: 8192
