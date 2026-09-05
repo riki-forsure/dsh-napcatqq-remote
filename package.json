@@ -1,6 +1,6 @@
 {
   "name": "dsh-qq-channel",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Route allow-listed QQ private messages into an isolated dsh workspace through OneBot 11.",
   "repository": {
     "type": "git",
@@ -34,6 +34,10 @@
     "cordis.patch.yml",
     "config.example.json",
     "README.md",
+    "QUICKSTART.md",
+    "NAPCAT_SETUP.md",
+    "INSTALLATION.md",
+    "AGENTS.md",
     "contact-style.example.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",

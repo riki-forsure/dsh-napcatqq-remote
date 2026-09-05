@@ -4,10 +4,20 @@
 
 ## Unreleased
 
+## 0.1.4 - 2026-09-05
+
 ### Added
 
-- GitHub Actions 持续集成与社区协作文档。
-- 人工安装和 Agent 安装两套独立指引。
+- 按环境分流的安装入口：插件快速安装、NapCatQQ 单独接入和从零开始详细教程。
+- 根目录 `AGENTS.md`，让本地 Agent 仅凭仓库地址即可检查环境、保护现有数据并完成安装验收。
+- README 首屏功能清单、QQ 指令表和 NapCatQQ / 插件 / DeepSeek Harness 组件关系图。
+- DeepSeek Harness 当前运行环境、模型和工作区设置，以及 NapCatQQ Desktop、OneBot WebSocket、防火墙和 WSL2 网络说明。
+
+### Changed
+
+- 将原来的单页长教程拆分成由 README 引导的多条安装路线。
+- 明确视觉模型只有取得真实图片数据时才能理解 QQ 表情，并补充插件支持范围与分层故障排查。
+- 明确 `dsh-routing-suite` 为可选增强；未安装时继续使用 dsh 内置 `standard` 或 `minimal`。
 
 ## 0.1.3 - 2026-09-04
 
