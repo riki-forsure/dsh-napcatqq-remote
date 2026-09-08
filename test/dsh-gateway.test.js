@@ -491,6 +491,177 @@ test("DshTaskGateway keeps the old contact mapping when replacement session crea
   assert.equal(saved.length, 0);
 });
 
+function historyTestGateway({ headers, inspections = {}, current = "session-qq-10001-current", live = new Map(), saved = [], save }) {
+  const disposed = [];
+  const resumed = [];
+  const gateway = new DshTaskGateway({
+    ctx: {
+      workspaceRegistry: { create: async () => ({ attachSession: async () => undefined }) },
+      sessionPersistence: {
+        list: async () => headers,
+        inspect: async (id) => inspections[id] ?? { meta: headers.find((header) => header.id === id), events: [] },
+      },
+      agentPresets: { defaultId: "router-auto", mount: async () => undefined },
+      agents: {
+        get: (id) => live.get(id),
+        resume: async (options) => {
+          resumed.push(options.resumeSessionId);
+          return { agent: { id: options.resumeSessionId, status: "idle" }, dispose: async () => undefined };
+        },
+      },
+    },
+    workspacePath: "/project/qq-workspace",
+    stateStore: {
+      load: async () => ({ sessions: { "10001": current } }),
+      save: save ?? (async (state) => saved.push(structuredClone(state))),
+    },
+    ensureDirectory: async () => undefined,
+  });
+  gateway.trackDisposableForTest = (sessionId) => {
+    gateway.handles.set(sessionId, {
+      dispose: async () => disposed.push(sessionId),
+    });
+  };
+  return { gateway, disposed, resumed };
+}
+
+test("DshTaskGateway lists only the contact's newest ten top-level QQ sessions", async () => {
+  const valid = Array.from({ length: 12 }, (_, index) => ({
+    version: 0,
+    id: `session-qq-10001-${index}`,
+    createdAt: 1000 + index,
+    cwd: "/project/qq-workspace",
+  }));
+  const headers = [
+    ...valid,
+    { version: 0, id: "session-qq-10002-foreign", createdAt: 9999, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-wrong-cwd", createdAt: 9998, cwd: "/project/elsewhere" },
+    { version: 0, id: "session-qq-10001-child", createdAt: 9997, cwd: "/project/qq-workspace", origin: "subagent" },
+  ];
+  const inspections = Object.fromEntries(valid.map((header, index) => [header.id, {
+    meta: header,
+    events: [{ seq: 0, type: "user/message", data: { role: "user", content: [{ type: "text", text: `话题 ${index}` }], source: { kind: "user" } } }],
+  }]));
+  inspections["session-qq-10001-11"].events.push({ seq: 1, type: "session/title", data: { title: "最新标题" } });
+  const { gateway } = historyTestGateway({ headers, inspections, current: "session-qq-10001-11" });
+  await gateway.start();
+
+  const text = await gateway.historyText("10001");
+
+  assert.match(text, /1\. \[当前\] 最新标题/);
+  assert.match(text, /10\. 话题 2/);
+  assert.doesNotMatch(text, /话题 1\b|话题 0\b|10002|wrong-cwd|child/);
+  assert.deepEqual(gateway.historySelections.get("10001"), valid.slice(2).reverse().map((header) => header.id));
+});
+
+test("DshTaskGateway history titles fall back from latest title to first user text to session tail", async () => {
+  const headers = [
+    { version: 0, id: "session-qq-10001-titled", createdAt: 3, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-prompted", createdAt: 2, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-abcdef123456", createdAt: 1, cwd: "/project/qq-workspace" },
+  ];
+  const inspections = {
+    "session-qq-10001-titled": { meta: headers[0], events: [
+      { seq: 0, type: "session/title", data: { title: "旧标题" } },
+      { seq: 1, type: "session/title", data: { title: "新标题" } },
+    ] },
+    "session-qq-10001-prompted": { meta: headers[1], events: [
+      { seq: 0, type: "user/message", data: { role: "user", content: [{ type: "text", text: "第一条用户消息很长，但仍可作为标题" }], source: { kind: "user" } } },
+    ] },
+    "session-qq-10001-abcdef123456": { meta: headers[2], events: [] },
+  };
+  const { gateway } = historyTestGateway({ headers, inspections, current: headers[0].id });
+  await gateway.start();
+
+  const text = await gateway.historyText("10001");
+
+  assert.match(text, /新标题/);
+  assert.match(text, /第一条用户消息很长/);
+  assert.match(text, /…123456|abcdef123456/);
+  assert.doesNotMatch(text, /旧标题/);
+});
+
+test("DshTaskGateway switches by the latest history index and disposes the idle owned handle", async () => {
+  const headers = [
+    { version: 0, id: "session-qq-10001-current", createdAt: 1, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-target", createdAt: 2, cwd: "/project/qq-workspace" },
+  ];
+  const saved = [];
+  const { gateway, disposed, resumed } = historyTestGateway({ headers, saved });
+  await gateway.start();
+  gateway.trackDisposableForTest("session-qq-10001-current");
+  await gateway.historyText("10001");
+
+  const result = await gateway.switchSession("10001", "1");
+
+  assert.match(result, /已切换/);
+  assert.match(result, /session-qq-10001-target/);
+  assert.equal(gateway.state.sessions["10001"], "session-qq-10001-target");
+  assert.equal(saved.at(-1).sessions["10001"], "session-qq-10001-target");
+  assert.deepEqual(disposed, ["session-qq-10001-current"]);
+  assert.equal(gateway.handles.has("session-qq-10001-current"), false);
+  assert.deepEqual(resumed, []);
+
+  const agent = await gateway.ensureAgent("10001");
+  assert.equal(agent.id, "session-qq-10001-target");
+  assert.deepEqual(resumed, ["session-qq-10001-target"]);
+});
+
+test("DshTaskGateway validates full session ids and leaves the mapping unchanged on errors", async () => {
+  const headers = [
+    { version: 0, id: "session-qq-10001-current", createdAt: 3, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-target", createdAt: 2, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10002-foreign", createdAt: 1, cwd: "/project/qq-workspace" },
+  ];
+  const { gateway } = historyTestGateway({ headers });
+  await gateway.start();
+
+  assert.match(await gateway.switchSession("10001", ""), /用法/);
+  assert.match(await gateway.switchSession("10001", "2"), /先发送 \/历史/);
+  await gateway.historyText("10001");
+  assert.match(await gateway.switchSession("10001", "99"), /超出范围/);
+  assert.match(await gateway.switchSession("10001", "session-qq-10002-foreign"), /不属于当前联系人/);
+  assert.match(await gateway.switchSession("10001", "session-qq-10001-missing"), /不存在/);
+  assert.match(await gateway.switchSession("10001", "session-qq-10001-current"), /当前已经/);
+  assert.equal(gateway.state.sessions["10001"], "session-qq-10001-current");
+
+  const success = await gateway.switchSession("10001", "session-qq-10001-target");
+  assert.match(success, /已切换/);
+  assert.equal(gateway.state.sessions["10001"], "session-qq-10001-target");
+});
+
+test("DshTaskGateway rolls back an in-memory switch when state persistence fails", async () => {
+  const headers = [
+    { version: 0, id: "session-qq-10001-current", createdAt: 2, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-target", createdAt: 1, cwd: "/project/qq-workspace" },
+  ];
+  const { gateway } = historyTestGateway({
+    headers,
+    save: async () => { throw new Error("disk full"); },
+  });
+  await gateway.start();
+
+  const result = await gateway.switchSession("10001", "session-qq-10001-target");
+
+  assert.match(result, /切换失败.*disk full/);
+  assert.equal(gateway.state.sessions["10001"], "session-qq-10001-current");
+});
+
+test("DshTaskGateway refuses history switching while the contact has active work", async () => {
+  const currentAgent = { id: "session-qq-10001-current", status: "running" };
+  const headers = [
+    { version: 0, id: "session-qq-10001-current", createdAt: 2, cwd: "/project/qq-workspace" },
+    { version: 0, id: "session-qq-10001-target", createdAt: 1, cwd: "/project/qq-workspace" },
+  ];
+  const { gateway } = historyTestGateway({ headers, live: new Map([[currentAgent.id, currentAgent]]) });
+  await gateway.start();
+
+  const result = await gateway.switchSession("10001", "session-qq-10001-target");
+
+  assert.match(result, /正在工作|任务结束/);
+  assert.equal(gateway.state.sessions["10001"], "session-qq-10001-current");
+});
+
 test("DshTaskGateway appends both sides to the live dialogue corpus", async () => {
   const root = await mkdtemp(join(tmpdir(), "qq-gateway-corpus-"));
   try {

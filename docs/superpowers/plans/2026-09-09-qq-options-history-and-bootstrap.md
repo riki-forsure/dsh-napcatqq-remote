@@ -38,15 +38,15 @@
 - Modify: `test/dsh-gateway.test.js`
 - Modify: `lib/dsh-gateway.js`
 
-- [ ] Add tests for listing the newest ten top-level `session-qq-<contact>-*` sessions in the QQ workspace, marking the current session and excluding other contacts, workspaces, and subagents.
-- [ ] Add tests for title selection: latest `session/title`, first user text, then a shortened session ID.
-- [ ] Add tests for switching by the most recent numeric list index and by full session ID.
-- [ ] Add tests that missing history, out-of-range indices, foreign sessions, nonexistent sessions, and active runs leave the current mapping unchanged.
-- [ ] Add a test that a successful switch persists state, disposes an idle plugin-owned handle, and lets the next message resume the chosen session.
-- [ ] Run focused history tests and confirm the expected failures.
-- [ ] Implement gateway history cache, session filtering/title extraction, formatted listing, validation, and atomic switching.
-- [ ] Re-run focused tests and confirm they pass.
-- [ ] Commit as `feat: add per-contact QQ session history`.
+- [x] Add tests for listing the newest ten top-level `session-qq-<contact>-*` sessions in the QQ workspace, marking the current session and excluding other contacts, workspaces, and subagents.
+- [x] Add tests for title selection: latest `session/title`, first user text, then a shortened session ID.
+- [x] Add tests for switching by the most recent numeric list index and by full session ID.
+- [x] Add tests that missing history, out-of-range indices, foreign sessions, nonexistent sessions, and active runs leave the current mapping unchanged.
+- [x] Add a test that a successful switch persists state, disposes an idle plugin-owned handle, and lets the next message resume the chosen session.
+- [x] Run focused history tests and confirm the expected failures.
+- [x] Implement gateway history cache, session filtering/title extraction, formatted listing, validation, and atomic switching.
+- [x] Re-run focused tests and confirm they pass.
+- [x] Commit as `feat: add per-contact QQ session history`.
 
 ## Task 3: Expose history commands through QQ
 
