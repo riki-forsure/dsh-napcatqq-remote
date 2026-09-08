@@ -55,11 +55,11 @@
 - Modify: `lib/channel.js`
 - Modify: `lib/index.js`
 
-- [ ] Add failing parser tests for `/历史`, `/history`, `/切换 2`, `/switch 2`, full-ID switching, usage text, and preservation of ordinary messages.
-- [ ] Add channel callbacks for history listing and session switching, returning all results through normal private QQ messages.
-- [ ] Wire the callbacks to `DshGateway` in the plugin entry point.
-- [ ] Run `pnpm test` and confirm all Node tests pass.
-- [ ] Commit as `feat: add QQ history commands`.
+- [x] Add failing parser tests for `/历史`, `/history`, `/切换 2`, `/switch 2`, full-ID switching, usage text, and preservation of ordinary messages.
+- [x] Add channel callbacks for history listing and session switching, returning all results through normal private QQ messages.
+- [x] Wire the callbacks to `DshGateway` in the plugin entry point.
+- [x] Run `pnpm test` and confirm all Node tests pass.
+- [x] Commit as `feat: add QQ history commands`.
 
 ## Task 4: Build the idempotent Windows full-stack installer and launchers
 

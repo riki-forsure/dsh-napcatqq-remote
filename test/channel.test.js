@@ -95,6 +95,43 @@ test("QqChannel handles its status and new-session commands locally", async () =
   ]);
 });
 
+test("QqChannel handles history and switch commands locally in Chinese and English", async () => {
+  const sent = [];
+  const historyRequests = [];
+  const switches = [];
+  const work = [];
+  const channel = new QqChannel({
+    allowedContacts: ["10001"],
+    dispatchTask: async (senderId, text) => { work.push([senderId, text]); return "ordinary"; },
+    listHistory: async (senderId) => { historyRequests.push(senderId); return "历史列表"; },
+    switchSession: async (senderId, target) => { switches.push([senderId, target]); return target ? `切换 ${target}` : "用法"; },
+    sendPrivateMessage: async (senderId, text) => { sent.push([senderId, text]); },
+  });
+
+  await channel.accept(privateMessage(20, "/历史"));
+  await channel.accept(privateMessage(21, "/history"));
+  await channel.accept(privateMessage(22, "/切换 2"));
+  await channel.accept(privateMessage(23, "/switch session-qq-10001-abc"));
+  await channel.accept(privateMessage(24, "/切换"));
+  await channel.accept(privateMessage(25, "继续普通任务"));
+
+  assert.deepEqual(historyRequests, ["10001", "10001"]);
+  assert.deepEqual(switches, [
+    ["10001", "2"],
+    ["10001", "session-qq-10001-abc"],
+    ["10001", ""],
+  ]);
+  assert.deepEqual(work, [["10001", "继续普通任务"]]);
+  assert.deepEqual(sent, [
+    ["10001", "历史列表"],
+    ["10001", "历史列表"],
+    ["10001", "切换 2"],
+    ["10001", "切换 session-qq-10001-abc"],
+    ["10001", "用法"],
+    ["10001", "ordinary"],
+  ]);
+});
+
 test("QqChannel accepts a second message while the first task is still running", async () => {
   const sent = [];
   let markStarted;
