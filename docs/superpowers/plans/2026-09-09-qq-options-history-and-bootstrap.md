@@ -24,13 +24,13 @@
 - Modify: `test/dsh-gateway.test.js`
 - Modify: `lib/dsh-gateway.js`
 
-- [ ] Add a test proving QQ-created agents call `agentCtx.tools.restrict({ deny: ["ask_user_question"] })` when available.
-- [ ] Add a compatibility test proving agent creation still succeeds when `tools.restrict` is absent.
-- [ ] Add assertions that the QQ system prompt asks the model to present numbered choices as normal text and end the turn for a later QQ reply.
-- [ ] Run `pnpm test -- --test-name-pattern="ask_user_question|numbered choices"` and confirm the new tests fail for the expected missing behavior.
-- [ ] Implement the restriction in the QQ agent preset setup and add the system-prompt fallback.
-- [ ] Re-run the focused tests and confirm they pass.
-- [ ] Commit as `feat: expose DSH choices in QQ`.
+- [x] Add a test proving QQ-created agents call `agentCtx.tools.restrict({ deny: ["ask_user_question"] })` when available.
+- [x] Add a compatibility test proving agent creation still succeeds when `tools.restrict` is absent.
+- [x] Add assertions that the QQ system prompt asks the model to present numbered choices as normal text and end the turn for a later QQ reply.
+- [x] Run `pnpm test -- --test-name-pattern="ask_user_question|numbered choices"` and confirm the new tests fail for the expected missing behavior.
+- [x] Implement the restriction in the QQ agent preset setup and add the system-prompt fallback.
+- [x] Re-run the focused tests and confirm they pass.
+- [x] Commit as `feat: expose DSH choices in QQ`.
 
 ## Task 2: Add contact-isolated history and switching in the gateway
 

@@ -107,6 +107,46 @@ test("preset setup completes without returning a value for agent-loop to commit"
   assert.equal(setupResult, undefined);
 });
 
+test("preset setup disables WebUI-only questions and asks for QQ-visible numbered choices", async () => {
+  const restrictions = [];
+  const sections = [];
+  const gateway = new DshTaskGateway({
+    ctx: { agentPresets: { mount: async () => undefined } },
+    workspacePath: "/project/qq-workspace",
+    stateStore: { load: async () => ({ sessions: {} }), save: async () => undefined },
+  });
+
+  await gateway.presetComposition("router-auto", "10001").setup({
+    tools: { restrict: (value) => restrictions.push(value) },
+    systemPrompt: { section: (value) => sections.push(value) },
+  });
+
+  assert.deepEqual(restrictions, [{ deny: ["ask_user_question"] }]);
+  const operatorPrompt = sections.find((section) => section.name === "qq-channel:operator-identity")?.text ?? "";
+  assert.match(operatorPrompt, /编号选项/);
+  assert.match(operatorPrompt, /普通文本/);
+  assert.match(operatorPrompt, /结束本轮/);
+  assert.match(operatorPrompt, /下一条 QQ 消息/);
+});
+
+test("preset setup keeps older DSH versions working when tool restriction is unavailable", async () => {
+  const warnings = [];
+  const gateway = new DshTaskGateway({
+    ctx: { agentPresets: { mount: async () => undefined } },
+    workspacePath: "/project/qq-workspace",
+    stateStore: { load: async () => ({ sessions: {} }), save: async () => undefined },
+    log: { info() {}, warn: (message) => warnings.push(message), error() {} },
+  });
+
+  await assert.doesNotReject(
+    gateway.presetComposition("router-auto", "10001").setup({
+      systemPrompt: { section: () => undefined },
+    }),
+  );
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /ask_user_question|工具限制/);
+});
+
 test("preset setup mounts the QQ contact style in the agent scope", async () => {
   const sections = [];
   const gateway = new DshTaskGateway({
@@ -129,7 +169,7 @@ test("preset setup mounts the QQ contact style in the agent scope", async () => 
     {
       name: "qq-channel:operator-identity",
       order: 9,
-      text: "你正在通过 QQ 和用户交流，同时实际运行在用户的电脑上。把自己当作正在操作这台电脑、检查文件和调用已安装工具的 dsh 助理来行动；不要把自己说成只会聊天的旁观者。\n涉及文件、图片、代码或配置时，先使用当前工作区和已安装工具核实，再给结论；不要假装已经读取了没有成功打开的内容。\n对用户保持自然的熟人私聊语气，具体措辞遵循 qq-channel:contact-style；语气可以口语化，但事实、路径、命令和执行结果必须准确。\n如果需要把本轮生成或找到的图片、文件发回 QQ，调用 qq_send_image 或 qq_send_file；不要只把路径写在回复里。\n收到的 QQ 内置表情会尽量从本机 QQ 缓存读取为真实图片交给视觉模型；收到的商城表情若带有真实图片也会保留。需要自然地用表情回应时，使用 qq_send_face（内置表情）或 qq_send_mface（有完整商城表情字段时），不要猜测缺失的商城 ID。",
+      text: "你正在通过 QQ 和用户交流，同时实际运行在用户的电脑上。把自己当作正在操作这台电脑、检查文件和调用已安装工具的 dsh 助理来行动；不要把自己说成只会聊天的旁观者。\n涉及文件、图片、代码或配置时，先使用当前工作区和已安装工具核实，再给结论；不要假装已经读取了没有成功打开的内容。\n对用户保持自然的熟人私聊语气，具体措辞遵循 qq-channel:contact-style；语气可以口语化，但事实、路径、命令和执行结果必须准确。\n如果需要把本轮生成或找到的图片、文件发回 QQ，调用 qq_send_image 或 qq_send_file；不要只把路径写在回复里。\n收到的 QQ 内置表情会尽量从本机 QQ 缓存读取为真实图片交给视觉模型；收到的商城表情若带有真实图片也会保留。需要自然地用表情回应时，使用 qq_send_face（内置表情）或 qq_send_mface（有完整商城表情字段时），不要猜测缺失的商城 ID。\nQQ 渠道不提供 WebUI 弹窗。需要用户选择或补充信息时，把问题和清晰的编号选项作为普通文本发到 QQ，然后结束本轮；用户的下一条 QQ 消息会继续当前任务。不要调用 ask_user_question。",
     },
   ]);
 });
