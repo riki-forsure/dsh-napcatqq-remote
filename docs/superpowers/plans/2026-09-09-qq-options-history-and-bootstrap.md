@@ -70,14 +70,14 @@
 - Add: `scripts/windows/open-napcat-manager.ps1`
 - Add: `scripts/windows/tests/DshNapCat.Setup.Tests.ps1`
 
-- [ ] Add fixture-based PowerShell tests for detecting existing NapCat Shell and Desktop installations, choosing Shell first when both exist, producing OneBot 11 WebSocket configuration without leaking the token, and creating the two required shortcut definitions.
-- [ ] Run the PowerShell tests and confirm the helper functions are initially missing.
-- [ ] Implement shared detection, GitHub-release resolution, OneKey download/extraction, WSL/DSH checks, configuration backup/write, loopback-only OneBot defaults, and shortcut creation helpers.
-- [ ] Implement `install-full-stack.ps1` so a new machine is prepared through the QQ login screen, while an existing Shell/Desktop install is preserved and reused.
-- [ ] Implement `start-dsh-qq-bot.ps1` so it starts/reuses NapCat, finalizes OneBot after login, starts only one DSH WebUI instance, and opens `http://127.0.0.1:3080/`.
-- [ ] Implement `open-napcat-manager.ps1` so Shell and Desktop users reach the correct login/management UI.
-- [ ] Re-run the PowerShell tests and a parse-only check for every script.
-- [ ] Commit as `feat: add Windows full-stack bootstrap`.
+- [x] Add fixture-based PowerShell tests for detecting existing NapCat Shell and Desktop installations, choosing Shell first when both exist, producing OneBot 11 WebSocket configuration without leaking the token, and creating the two required shortcut definitions.
+- [x] Run the PowerShell tests and confirm the helper functions are initially missing.
+- [x] Implement shared detection, GitHub-release resolution, OneKey download/extraction, WSL/DSH checks, configuration backup/write, local WSL-adapter OneBot defaults, and shortcut creation helpers.
+- [x] Implement `install-full-stack.ps1` so a new machine is prepared through the QQ login screen, while an existing Shell/Desktop install is preserved and reused.
+- [x] Implement `start-dsh-qq-bot.ps1` so it starts/reuses NapCat, finalizes OneBot after login, starts only one DSH WebUI instance, and opens `http://127.0.0.1:3080/`.
+- [x] Implement `open-napcat-manager.ps1` so Shell and Desktop users reach the correct login/management UI.
+- [x] Re-run the PowerShell tests and a parse-only check for every script.
+- [x] Commit as `feat: add Windows full-stack bootstrap`.
 
 ## Task 5: Rewrite installation and usage documentation
 
