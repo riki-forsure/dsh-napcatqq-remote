@@ -10,11 +10,11 @@
 
 ## Global Constraints
 
-- [ ] Do not stop or restart the currently running DSH process.
-- [ ] Never commit QQ numbers, OneBot tokens, local absolute user paths, or generated state.
-- [ ] Preserve the installed plugin's local workspace, persona, emoji, and configuration customizations.
-- [ ] Each behavioral change starts with a failing focused test, then the minimum implementation, then the full test suite.
-- [ ] New Windows scripts must be idempotent and support temporary fixture directories for tests.
+- [x] Do not stop or restart the currently running DSH process.
+- [x] Never commit QQ numbers, OneBot tokens, local absolute user paths, or generated state.
+- [x] Preserve the installed plugin's local workspace, persona, emoji, and configuration customizations.
+- [x] Each behavioral change starts with a failing focused test, then the minimum implementation, then the full test suite.
+- [x] New Windows scripts must be idempotent and support temporary fixture directories for tests.
 
 ---
 
@@ -98,7 +98,7 @@
 - [x] Update version to `0.2.0`, lockfile metadata, and changelog.
 - [x] Add DSH version/API compatibility checks and prevent source installs from shadowing the host with a private DSH API copy.
 - [x] Search for stale Desktop-only instructions, placeholders, personal QQ numbers, tokens, and user-specific paths.
-- [ ] Commit as `docs: add full-stack setup and history guide`.
+- [x] Commit the documentation and compatibility work.
 
 ## Task 6: Synchronize the installed plugin without restarting DSH
 
@@ -118,10 +118,10 @@
 **Files:**
 - Verify all changed files
 
-- [ ] Run the complete Node test suite from a clean command.
-- [ ] Run all PowerShell tests and parser checks from a clean command.
-- [ ] Run `git diff --check`, inspect `git diff --stat`, and verify `git status --short` contains only intended changes.
-- [ ] Scan tracked files for local QQ identifiers, tokens, local persona content, and machine-specific absolute paths.
-- [ ] Confirm DSH was not restarted and the current WebUI remains reachable.
-- [ ] Commit any final integration fixes, tag `v0.2.0`, push `main`, push the tag, and create/update the GitHub release with concise notes.
-- [ ] Report the repository URL, changed local plugin path, tests run, and the fact that a manual DSH restart is still required to activate the new plugin code.
+- [x] Run the complete Node test suite from a clean command.
+- [x] Run all PowerShell tests and parser checks from a clean command.
+- [x] Run `git diff --check`, inspect `git diff --stat`, and verify `git status --short` contains only intended changes.
+- [x] Scan tracked files for local QQ identifiers, tokens, local persona content, and machine-specific absolute paths.
+- [x] Confirm DSH was not restarted and the current WebUI remains reachable.
+- [x] Commit final integration fixes, tag `v0.2.0`, push `main`, push the tag, and create the GitHub release with concise notes.
+- [x] Report the repository URL, changed local plugin path, tests run, and the fact that a manual DSH restart is still required to activate the new plugin code.
