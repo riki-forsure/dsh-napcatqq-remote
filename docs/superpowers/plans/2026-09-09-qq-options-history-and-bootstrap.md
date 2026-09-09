@@ -108,10 +108,10 @@
 - Modify selectively: `/home/riki/.dsh/plugins/dsh-qq-channel/lib/index.js`
 - Modify selectively: `/home/riki/.dsh/plugins/dsh-qq-channel/package.json`
 
-- [ ] Re-diff the public repository against the installed plugin immediately before editing.
-- [ ] Apply only the option/history/runtime wiring changes and preserve all local-only persona, emoji, workspace, and configuration logic.
-- [ ] Run the installed plugin's Node tests and syntax checks without loading it into the active DSH process.
-- [ ] Confirm the active DSH PID and start time are unchanged.
+- [x] Re-diff the public repository against the installed plugin immediately before editing.
+- [x] Apply only the option/history/runtime wiring changes and preserve all local-only persona, emoji, workspace, and configuration logic.
+- [x] Run the installed plugin's Node tests and syntax checks without loading it into the active DSH process.
+- [x] Confirm the active DSH PID and process start ticks are unchanged.
 
 ## Task 7: Final verification and GitHub publication
 
