@@ -9,6 +9,22 @@
 
 缺少 NapCatQQ 时改看 [`NAPCAT_SETUP.md`](NAPCAT_SETUP.md)；需要从 WSL2、Node.js 和 dsh 开始时改看 [`INSTALLATION.md`](INSTALLATION.md)；交给 Agent 时直接提供仓库地址并让它读取 [`AGENTS.md`](AGENTS.md)。
 
+## 最省事：让脚本复用现有环境
+
+如果仓库已下载到 Windows，在仓库目录打开 PowerShell，填写允许发消息的**联系人 QQ**：
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\windows\install-full-stack.ps1 -AllowedContacts '联系人QQ'
+```
+
+脚本会检测现有 NapCat Shell 或 NapCat Desktop、WSL、DSH 和插件；已有内容会复用，修改配置前会备份。缺少路由预设时会安装 `dsh-routing-suite`，最后创建：
+
+- `启动 DSH QQ 机器人`：复用或启动 NapCat，只在 3080 未监听时启动一个 DSH，然后打开 WebUI；
+- `NapCat 登录与管理`：按实际安装形态打开 Shell WebUI 或 Desktop 管理器。
+
+若停在 QQ 登录/设备验证界面，人工完成登录后双击“启动 DSH QQ 机器人”，脚本会继续完成 Shell 的 OneBot 和插件配置。已有 NapCat Desktop 会保留；由于 Desktop 与 Shell 的界面及配置机制不同，必要时按 [`NAPCAT_SETUP.md`](NAPCAT_SETUP.md#路线-b已有-napcatqq-desktop) 检查其 OneBot 页面。
+
 ## 安装前记下三项信息
 
 | 信息 | 示例 | 从哪里取得 |
@@ -60,7 +76,10 @@ git clone https://github.com/riki-forsure/dsh-napcatqq-remote.git dsh-qq-channel
 cd ~/dsh-qq-channel
 pnpm install --frozen-lockfile
 pnpm test
+pnpm prune --prod --config.auto-install-peers=false
 ```
+
+最后一条会移除仅用于仓库测试的依赖，确保插件运行时使用当前 DeepSeek Harness 自己的 API。已有兼容 DSH 不需要为了装插件而升级。
 
 如果目录已经存在，不要再次克隆：
 
@@ -69,6 +88,7 @@ cd ~/dsh-qq-channel
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm test
+pnpm prune --prod --config.auto-install-peers=false
 ```
 
 测试应显示全部通过。本项目的文件/表情路径测试以 WSL/Linux 为目标环境；直接使用 Windows Node 运行测试时，`/mnt/c/...` 路径用例可能不适用。
@@ -130,7 +150,7 @@ nano ~/.dsh/qq-channel/config.json
   "stylePromptFile": "",
   "emojiRoot": "",
   "botSelfId": "",
-  "agentPreset": "router-auto",
+  "agentPreset": "router-standard",
   "fallbackAgentPresets": ["router-standard", "standard", "minimal"],
   "agentProvider": "deepseek-official",
   "agentModel": "deepseek-v4-flash-vision-exp",
@@ -202,8 +222,18 @@ npx @deepseek-ai/dsh web --host 127.0.0.1 --port 3080
 - dsh 实际执行任务并通过 QQ 发回 `hello.txt`；
 - 当前任务运行时再发“文件里再加一行当前时间”，它会调整当前工作，而不是新建并发会话；
 - 发送 `/新任务` 后收到确认，下一条普通消息新建会话；旧会话仍保留。
+- 发送 `/历史` 能看到当前联系人自己的最近 10 段对话；发送 `/切换 2` 后下一条普通消息继续对应历史。
+- 当 DSH 需要用户选择时，QQ 会收到普通文字编号选项，不会只在 WebUI 弹窗等待。
 
-如果 `/状态` 显示从 `router-auto` 降级到 `standard` 或 `minimal`，说明可选路由预设未安装，渠道仍然可用，不属于连接失败。
+如果 `/状态` 显示降级到 `standard` 或 `minimal`，说明首选路由预设不可用，渠道仍然可用，不属于连接失败。
+
+推荐补装路由套件：
+
+```bash
+dsh plugin --profile web add github:yjh051108/dsh-routing-suite
+```
+
+当前套件提供 `router-standard`。新配置默认使用它；既有配置中的自定义 `router-auto` 不会被安装脚本覆盖。没有套件时 `standard`、`minimal` 仍能运行。
 
 ## 可选：语气和视觉表情
 
@@ -225,6 +255,7 @@ cd ~/dsh-qq-channel
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm test
+pnpm prune --prod --config.auto-install-peers=false
 dsh plugin --profile web add "$PWD"
 ```
 

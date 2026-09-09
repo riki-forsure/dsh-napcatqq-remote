@@ -202,33 +202,24 @@ test("preset setup mounts the optional local identity skill", async () => {
 });
 
 test("preset setup fixes the vision model and max reasoning for the QQ agent", async () => {
-  const handlers = {};
+  let installed;
   const gateway = new DshTaskGateway({
     ctx: { agentPresets: { mount: async () => undefined } },
     workspacePath: "/project/qq-workspace",
     agentProvider: "deepseek-official",
     agentModel: "deepseek-v4-flash-vision-exp",
     agentReasoningEffort: "max",
+    installModelSelection: async (agentCtx, selection) => {
+      installed = { agentCtx, selection };
+      return true;
+    },
     stateStore: { load: async () => ({ sessions: {} }), save: async () => undefined },
   });
 
-  await gateway.presetComposition("router-auto").setup({
-    on: (name, callback) => {
-      handlers[name] = callback;
-      return () => undefined;
-    },
-  });
-  const assembled = await handlers["system-prompt/assemble"]({}, {}, async () => ({ variables: {} }));
-  assert.deepEqual(assembled.variables, {
-    provider: "deepseek-official",
-    model: "deepseek-v4-flash-vision-exp",
-  });
-  const request = await handlers["agent/request"]({}, async () => ({
-    provider: "old-provider",
-    model: "old-model",
-    reasoningEffort: "low",
-  }));
-  assert.deepEqual(request, {
+  const agentCtx = { on: () => () => undefined };
+  await gateway.presetComposition("router-auto").setup(agentCtx);
+  assert.equal(installed.agentCtx, agentCtx);
+  assert.deepEqual(installed.selection.current, {
     provider: "deepseek-official",
     model: "deepseek-v4-flash-vision-exp",
     reasoningEffort: "max",

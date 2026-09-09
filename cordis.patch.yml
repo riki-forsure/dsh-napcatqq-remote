@@ -10,7 +10,7 @@
           (process.env.DSH_QQ_CONTACTS || '').split(',').map((value) => value.trim()).filter(Boolean)
         workspacePath: !!js process.env.DSH_QQ_WORKSPACE || process.env.HOME + '/dsh-work/qq-channel-workspace'
         workspaceTitle: QQ 渠道
-        agentPreset: !!js process.env.DSH_QQ_AGENT_PRESET || 'router-auto'
+        agentPreset: !!js process.env.DSH_QQ_AGENT_PRESET || 'router-standard'
         fallbackAgentPresets: !!js >-
           (process.env.DSH_QQ_FALLBACK_PRESETS || 'router-standard,standard,minimal').split(',').map((value) => value.trim()).filter(Boolean)
         agentProvider: !!js process.env.DSH_QQ_AGENT_PROVIDER || 'deepseek-official'

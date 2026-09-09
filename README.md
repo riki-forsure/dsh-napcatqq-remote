@@ -15,6 +15,9 @@
 - **工作中途调整方向**：dsh 尚在执行时继续发一段话，新消息会作为补充要求加入当前任务，不会重复创建第二个并发任务。
 - **长期保持同一对话**：同一联系人持续复用原 dsh 会话，上下文用尽前不会自动切换。
 - **指令切换会话**：发送 `/新任务` 或 `/new` 清除当前映射，下一条普通消息自动新建一段独立对话；旧对话不会被删除。
+- **历史对话查看与恢复**：发送 `/历史` 查看该联系人自己的最近 10 段 QQ 对话，再用 `/切换 2` 或完整会话 ID 恢复；不同联系人的历史不会互相出现。
+- **选择题不会假装卡住**：QQ Agent 不使用只在 WebUI 可见的选择弹窗；需要选择时会把编号选项作为普通 QQ 文字发出，等下一条消息继续。
+- **适配多个 DSH 预览版本**：不在插件目录私装一套旧 DSH API；启动时使用宿主 DeepSeek Harness 的接口，并对可选能力做检测和降级。
 - **多人隔离**：每个白名单联系人都有独立会话、上下文、附件目录和顺序队列，不会互相串线。
 - **可选聊天语气**：可以编辑联系人语气模板；它只影响 QQ 渠道，不改变其他 dsh 工作区。
 - **重启后继续**：联系人和 dsh 会话的映射会保存，正常重启后仍能接着聊。
@@ -27,6 +30,9 @@
 | --- | --- | --- |
 | `/状态`、`/status` | 查看 OneBot 连接、白名单数量、QQ 工作区、模型、语气和实际 Agent 预设。 | 否 |
 | `/新任务`、`/new` | 解除该联系人当前会话的映射；下一条普通消息才会创建新会话。 | 否 |
+| `/历史`、`/history` | 查看当前联系人自己的最近 10 段 QQ 历史对话，并标记当前项。 | 否 |
+| `/切换 2`、`/switch 2` | 切换到刚刚 `/历史` 列出的第 2 段对话。任务运行中会拒绝切换。 | 否 |
+| `/切换 <完整会话ID>`、`/switch <完整会话ID>` | 精确恢复属于当前联系人、当前 QQ 工作区的历史对话。 | 否 |
 
 其他私聊文字、图片和文件都会作为工作请求交给 dsh。仅发送 `/状态` 不会提前创建对话。
 
@@ -34,6 +40,7 @@
 
 | 你现在的情况 | 建议阅读 | 大致用时 |
 | --- | --- | --- |
+| 希望一条命令准备 DSH、NapCat、OneBot、本插件与桌面快捷方式 | [从零开始：自动安装](INSTALLATION.md#路线-a推荐自动安装) | 主要等待下载，最后人工登录 QQ |
 | dsh 和 NapCatQQ 都已安装、都能正常运行 | [快速安装插件](QUICKSTART.md) | 5～10 分钟 |
 | dsh 已能正常对话，懂基本终端操作，但尚未安装 NapCatQQ | [NapCatQQ 安装与接入](NAPCAT_SETUP.md) | 15～30 分钟 |
 | dsh、WSL2 或 NapCatQQ 还没有准备好，希望从零开始 | [从零开始详细教程](INSTALLATION.md) | 30～60 分钟 |
@@ -47,9 +54,9 @@
 把下面整段连同仓库地址交给一个能访问本机终端的 Agent：
 
 ```text
-请安装并配置 https://github.com/riki-forsure/dsh-napcatqq-remote 。
-先完整读取仓库根目录 AGENTS.md，再按其中的环境检查、备份、安装和验收流程执行。
-保留现有 dsh 配置、会话、工作区和运行进程；需要我登录 QQ、填写联系人 QQ 或重启 dsh 时再明确告诉我。输出中隐藏所有 Token。
+请完整安装并配置 https://github.com/riki-forsure/dsh-napcatqq-remote 。
+先完整读取仓库根目录 AGENTS.md，自动检测并复用现有 NapCat Shell/Desktop 与 DSH；缺少的 WSL、Node、DSH、dsh-routing-suite、OneBot、本插件和桌面快捷方式都按文档装好。
+把流程推进到 NapCat 的 QQ 登录/设备验证界面后再让我操作；登录完成后继续自动写入 OneBot 与插件配置并验收。保留现有配置、会话、语气和工作区，输出中隐藏 QQ 号与所有 Token。
 ```
 
 根目录的 `AGENTS.md` 已包含环境分流、准确命令、配置字段、保留规则和验收清单，因此只给 Agent 仓库地址也能快速理解安装方式。
@@ -59,7 +66,7 @@
 ```text
 白名单联系人发送 QQ 私聊
         ↓
-机器人 QQ（登录在 NapCatQQ Desktop）
+机器人 QQ（登录在 NapCatQQ Shell/OneKey 或 Desktop）
         ↓  OneBot 11 WebSocket 事件
 dsh-napcatqq-remote
   ├─ 验证发送者白名单
@@ -100,9 +107,9 @@ NapCatQQ 发回原联系人
 - 同一联系人之后的普通消息持续使用这一对话。
 - 当前任务仍在运行时，新消息通过 dsh 的 steer 能力补充到当前任务。
 - 发送 `/新任务` 后只是解除映射；下一条普通消息才新建对话。
-- 旧会话和文件不会被 `/新任务` 删除，仍可从 dsh WebUI 查看。
-
-当前版本没有“通过 QQ 指定并恢复任意旧会话”的指令。需要查看旧对话时请使用 dsh WebUI。
+- 旧会话和文件不会被 `/新任务` 删除；发送 `/历史` 可查看当前联系人的最近 10 段，发送 `/切换 2` 可继续其中一段。
+- `/历史` 与 `/切换` 按联系人隔离；一个白名单联系人看不到另一个联系人的 QQ 会话。
+- 当前任务运行时不会切换会话，以免正在执行的结果串到另一段历史。
 
 ### 文件、图片与 QQ 表情
 
@@ -127,13 +134,25 @@ NapCatQQ 发回原联系人
 
 ### Agent 预设与可选路由插件
 
-默认候选顺序是：
+新安装推荐候选顺序是：
 
 ```text
-router-auto → router-standard → standard → minimal
+router-standard → standard → minimal
 ```
 
-`router-auto` 是 Agent 预设名称，不是模型名称。[dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite) 是独立、可选且推荐的开源预设套件，可提供 `router-standard` 等路由预设；本仓库没有复制或捆绑它。即使没有安装，插件也会回退到 dsh 自带的 `standard` 或 `minimal`，QQ 渠道仍可工作。
+`router-standard` 是 Agent 预设名称，不是模型名称。自动安装会在缺少路由预设时，从独立开源项目 [dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite) 安装它；本仓库没有复制或捆绑对方源码。既有部署若使用自定义的 `router-auto` 会被保留。路由套件安装失败或用户选择不安装时，插件仍会回退到 DSH 自带的 `standard` 或 `minimal`，QQ 渠道可以继续工作。
+
+### DeepSeek Harness 版本兼容
+
+DeepSeek Harness 仍在快速迭代，npm 的稳定标签、预览标签与 GitHub 源码快照可能不完全同步。本项目的自动安装器会保留已有兼容 DSH；全新安装使用 `@deepseek-ai/dsh@latest`，低于 `0.1.0-rc.6` 才自动升级。`0.1.x` 版本通过运行时能力检测兼容，未来版本则提示完成 QQ 端验收。
+
+本插件把 DSH API 包声明为可选 peer dependency，不会在插件目录私装另一套旧 API。手动从 GitHub ZIP/源码安装时，应在测试后执行：
+
+```bash
+pnpm prune --prod --config.auto-install-peers=false
+```
+
+这样可避免新旧对象混用产生类似 `commit is not a function` 的错误。`ask_user_question` 限制、模型选择等可选接口不存在时，插件会走兼容路径并在日志中说明。
 
 ## 默认数据位置
 
@@ -156,6 +175,7 @@ router-auto → router-standard → standard → minimal
 - 当前只处理白名单联系人的 QQ 私聊；群聊和机器人自身消息会被忽略。
 - dsh 与 NapCatQQ 必须同时运行，插件本身不能登录 QQ。
 - 修改 `config.json` 或语气文件后，需要完整重启 dsh 才会重新读取。
+- NapCatQQ Shell/OneKey 与 NapCatQQ Desktop 是两套不同产品形态，界面、启动器和配置位置不同；自动安装器会识别并走对应分支。
 - 图片和表情理解取决于 NapCat/QQ 缓存是否提供真实图片，以及所选模型是否支持视觉。
 - DeepSeek Harness 目前仍处于开发者预览阶段，升级 dsh 后若出现插件 API 兼容问题，请先查看本仓库 Release 和 Issue。
 
@@ -176,8 +196,8 @@ router-auto → router-standard → standard → minimal
 | 项目 | 与本项目的关系 |
 | --- | --- |
 | [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) | DeepSeek Harness 主程序与插件运行环境；必需。 |
-| [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) | QQ 到 OneBot 11 的实现；必需。 |
-| [NapNeko/NapCatQQ-Desktop](https://github.com/NapNeko/NapCatQQ-Desktop) | 推荐给 Windows 用户的 NapCatQQ 图形化安装方式。 |
+| [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) | QQ 到 OneBot 11 的实现；必需。新安装默认使用其 Windows Shell OneKey 包。 |
+| [NapNeko/NapCatQQ-Desktop](https://github.com/NapNeko/NapCatQQ-Desktop) | 独立的图形化管理器；已有 Desktop 时会保留并复用，但界面与 Shell WebUI 不同。 |
 | [botuniverse/onebot-11](https://github.com/botuniverse/onebot-11) | 本插件使用的消息和接口规范。 |
 | [yjh051108/dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite) | 可选且推荐的路由预设来源；未复制、修改或捆绑其源码。 |
 

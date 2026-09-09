@@ -4,13 +4,43 @@
 
 已经能运行 dsh 和 NapCat 时用 [`QUICKSTART.md`](QUICKSTART.md)；只有 NapCat 没装但具备基础时用 [`NAPCAT_SETUP.md`](NAPCAT_SETUP.md)；交给本地 Agent 时让它读取 [`AGENTS.md`](AGENTS.md)。
 
+## 路线 A（推荐）：自动安装
+
+这条路线会自动检测并复用已有组件，缺什么补什么；新装 NapCat 默认使用官方 Windows Shell OneKey，最后创建桌面启动和管理快捷方式。仓库下载到 Windows 后，在仓库目录打开 PowerShell：
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\windows\install-full-stack.ps1 -AllowedContacts '联系人QQ'
+```
+
+多个白名单联系人写成：
+
+```powershell
+.\scripts\windows\install-full-stack.ps1 -AllowedContacts '联系人QQ1','联系人QQ2'
+```
+
+脚本完成 WSL2、Node.js 24、DeepSeek Harness、本插件、推荐的 `dsh-routing-suite`、NapCat/OneBot 配置与快捷方式。首次 QQ 扫码、密码、设备或风控验证由账号持有人完成；登录后双击“启动 DSH QQ 机器人”，Shell 路线会继续自动完成剩余配置。
+
+DSH 版本处理不是“永远拉 GitHub 最新源码”：脚本先执行 `dsh --version`。已有 `0.1.0-rc.6` 至 `0.1.x` 会保留并通过运行时能力检测适配；只有过旧版本才升级。全新安装固定走 npm 的 `@deepseek-ai/dsh@latest` 稳定标签，避开 GitHub 主分支/alpha 快照与已发布插件 API 不同步的问题。
+
+已有 NapCatQQ Desktop 会被识别和保留。Desktop 与 Shell 是不同界面；Desktop 用户若需要核对 OneBot 页面，按 [`NAPCAT_SETUP.md` 的 Desktop 路线](NAPCAT_SETUP.md#路线-b已有-napcatqq-desktop)操作。
+
+自动安装结束后桌面有：
+
+- `启动 DSH QQ 机器人`：启动或复用 NapCat，只在 3080 未监听时启动一个 DSH，并打开 WebUI；
+- `NapCat 登录与管理`：只打开实际安装的 Shell WebUI 或 Desktop 管理器。
+
+以下“路线 B”是完整人工教程，适合希望逐层理解或自动脚本遇到环境差异时使用。
+
+## 路线 B：完整人工安装
+
 ## 安装完成后会得到什么
 
 ```text
 Windows 10/11
-├─ QQ / NapCatQQ Desktop
+├─ QQ / NapCatQQ Shell（OneKey）或 Desktop
 │  ├─ 登录机器人 QQ
-│  └─ OneBot 11 WebSocket Server：0.0.0.0:3001
+│  └─ OneBot 11 WebSocket Server：Windows 本机/WSL 虚拟适配器:3001
 │
 └─ WSL2 Ubuntu
    ├─ Node.js 24、pnpm、Git
@@ -36,7 +66,7 @@ NapCatQQ 只负责 QQ 与 OneBot；本插件负责渠道、白名单、附件和
 
 | 组件 | 推荐位置 | 说明 |
 | --- | --- | --- |
-| QQ NT、NapCatQQ Desktop | Windows 10/11 x64 | 登录机器人 QQ、收发消息 |
+| QQ NT、NapCatQQ Shell/OneKey 或 Desktop | Windows 10/11 x64 | 登录机器人 QQ、收发消息 |
 | DeepSeek Harness、本插件 | WSL2 Ubuntu | 运行 Agent、工具和 QQ 独立工作区 |
 
 ### 1.1 检查 WSL
@@ -180,45 +210,37 @@ npx @deepseek-ai/dsh
 
 完成测试后，在运行 WebUI 的终端按 `Ctrl+C` 暂时停止它，稍后装完插件再启动。
 
-## 第 4 步：安装并登录 NapCatQQ Desktop
+## 第 4 步：安装并登录 NapCatQQ
 
-### 4.1 下载和安装
+### 4.1 推荐：Windows Shell OneKey
 
-1. 在 Windows 打开 [NapCatQQ Desktop 官方 Releases](https://github.com/NapNeko/NapCatQQ-Desktop/releases)。
-2. 打开 Latest 版本。
-3. 下载 `NapCatQQ-Desktop-<版本>-x64.msi` 或同类 `NapCatQQ-Desktop-x64.msi`。
-4. 不要下载名称含 `watch-v` 的监控工具。
-5. 双击 MSI，完成安装并启动。
+1. 打开 [NapCatQQ 官方 Releases](https://github.com/NapNeko/NapCatQQ/releases)。
+2. 下载最新 `NapCat.Shell.Windows.OneKey.zip` 并解压到固定目录。
+3. 运行其中的 `NapCatInstaller.exe`；这个轻量包会继续部署完整的 `NapCat.*.Shell`，只解压还没有安装完。
+4. 进入生成的 Shell 目录，运行 `napcat.bat`。
+5. 人工完成机器人 QQ 登录和设备验证。
 
-### 4.2 登录机器人 QQ
+普通 Shell 包可能使用 `launcher-user.bat`/`launcher.bat`；OneKey 与普通 Shell 文件布局不同。Shell 主要通过浏览器 WebUI 管理。
 
-1. 在 NapCatQQ Desktop 添加或启动 Bot。
-2. 登录专门负责收发消息的机器人 QQ。
-3. 人工完成扫码、密码、设备或风控验证。
-4. 确认 Bot 显示在线。
-5. 打开 NapCat WebUI，记下 WebUI 地址与登录 Token。
+### 4.2 已有 NapCatQQ Desktop
 
-机器人账号是“接收任务并回消息”的账号；允许使用插件的发送者 QQ 稍后填入 `allowedContacts`。
+NapCatQQ Desktop 是独立图形化管理器，不等同于 Shell WebUI。已经安装时可以继续使用，无需迁移：在 Desktop 中添加/启动 Bot并完成登录，然后进入该 Bot 的网络配置。其数据与按钮位置不要套用 Shell 的 `config/onebot11_<QQ>.json` 路径。
 
 ### 4.3 创建 OneBot 11 WebSocket Server
 
-在 NapCat WebUI 的“网络配置”中创建 **OneBot 11 WebSocket Server**：
+无论使用 Shell 还是 Desktop，目标都是创建 **OneBot 11 WebSocket Server**：
 
 | 字段 | 推荐值 |
 | --- | --- |
 | 启用 | 开启 |
 | 类型 | WebSocket Server，不是 Reverse WebSocket |
-| Host | `0.0.0.0` |
+| Host | WSL 默认路由显示的 Windows 主机地址；镜像网络可用 `127.0.0.1` |
 | Port | `3001` |
 | 消息格式 | `array` |
 | `reportSelfMessage` | 关闭 |
-| Access Token | 建议填写随机长字符串 |
+| Access Token | 随机长字符串，并与插件完全一致 |
 
-保存并启用。Windows 防火墙弹窗中只允许“专用网络”。
-
-NapCat WebUI 登录 Token 与 OneBot Access Token 是两套凭据。本插件只填写 OneBot Access Token。
-
-完整截图式逻辑、同机部署和 NapCat 专项排错见 [`NAPCAT_SETUP.md`](NAPCAT_SETUP.md)。
+不要把 3001 暴露到公网。NapCat WebUI 登录 Token 与 OneBot Access Token 是两套凭据，本插件只使用后者。更详细的形态判断和排错见 [`NAPCAT_SETUP.md`](NAPCAT_SETUP.md)。
 
 ### 4.4 从 WSL 找到 Windows 地址
 
@@ -254,9 +276,10 @@ git clone https://github.com/riki-forsure/dsh-napcatqq-remote.git dsh-qq-channel
 cd ~/dsh-qq-channel
 pnpm install --frozen-lockfile
 pnpm test
+pnpm prune --prod --config.auto-install-peers=false
 ```
 
-测试应全部通过。然后把当前源码目录加入 dsh 的 `web` profile：
+测试应全部通过。`prune` 会移除测试阶段解析的依赖，确保插件载入后使用正在启动 WebUI 的那套 DeepSeek Harness API，避免新旧对象混用产生类似 `commit is not a function` 的错误。然后把当前源码目录加入 dsh 的 `web` profile：
 
 ```bash
 npx @deepseek-ai/dsh plugin --profile web add "$PWD"
@@ -299,7 +322,7 @@ nano ~/.dsh/qq-channel/config.json
   "stylePromptFile": "",
   "emojiRoot": "",
   "botSelfId": "",
-  "agentPreset": "router-auto",
+  "agentPreset": "router-standard",
   "fallbackAgentPresets": ["router-standard", "standard", "minimal"],
   "agentProvider": "deepseek-official",
   "agentModel": "deepseek-v4-flash-vision-exp",
@@ -326,7 +349,7 @@ nano ~/.dsh/qq-channel/config.json
 | `stylePromptFile` | 空 | 自定义语气文件的绝对路径；空值表示使用默认语气。 |
 | `emojiRoot` | 空 | QQ NT 表情数据根目录；空值时自动探测。 |
 | `botSelfId` | 空 | 机器人 QQ；通常自动识别，表情缓存定位异常时可手填。 |
-| `agentPreset` | `router-auto` | 首选 Agent 预设，不是模型名。 |
+| `agentPreset` | `router-standard` | 首选 Agent 预设，不是模型名。既有自定义 `router-auto` 可继续保留。 |
 | `fallbackAgentPresets` | `router-standard`、`standard`、`minimal` | 首选不可用时按顺序回退。 |
 | `agentProvider` | `deepseek-official` | dsh 中已配置的模型提供商 ID。 |
 | `agentModel` | `deepseek-v4-flash-vision-exp` | QQ 渠道使用的模型 ID；识图需要视觉模型。 |
@@ -421,6 +444,8 @@ npx @deepseek-ai/dsh web --host 127.0.0.1 --port 3080
 
 新要求会 steer 到当前任务。发送 `/新任务` 后，下一条普通消息才会新建会话；旧会话仍保留在 dsh WebUI。
 
+发送 `/历史` 可列出当前联系人自己的最近 10 段 QQ 对话；发送 `/切换 2` 或 `/switch 2` 后，下一条普通消息会继续对应历史。任务仍在运行时插件会拒绝切换。DSH 需要用户选择时，会把编号选项作为普通 QQ 文字发送并结束本轮，用户直接回复序号或内容即可继续。
+
 ## 图片、文件和表情的实际支持范围
 
 ### 接收
@@ -460,17 +485,23 @@ export DSH_QQ_WINDOWS_USER="WINDOWS_USER"
 
 ## Agent 预设与 dsh-routing-suite
 
-默认选择顺序：
+新安装默认选择顺序：
 
 ```text
-router-auto → router-standard → standard → minimal
+router-standard → standard → minimal
 ```
 
-- `router-auto` 是为既有部署保留的首选 Agent 预设名称，不是模型。
-- `router-standard` 可来自独立项目 [dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite)。
+- `router-standard` 来自独立项目 [dsh-routing-suite](https://github.com/yjh051108/dsh-routing-suite)。
+- `router-auto` 可能是既有部署中的自定义预设名称，自动安装器会保留现有设置。
 - `standard` 和 `minimal` 是 dsh 内置预设。
 
-因此 dsh-routing-suite 是可选且推荐的增强，不是安装前置。未安装时插件自动回退到内置预设；`/状态` 会显示实际使用项和降级原因。只有用户明确希望安装路由套件时，才按它自己的仓库说明安装。
+自动安装器和 Agent 安装流程会在缺少 `router-standard` 时执行：
+
+```bash
+dsh plugin --profile web add github:yjh051108/dsh-routing-suite
+```
+
+手动安装时也推荐执行。路由套件仍不是硬依赖：下载或安装失败时插件自动回退到内置预设；`/状态` 会显示实际使用项和降级原因。
 
 ## 本地目录与配置优先级
 
@@ -497,7 +528,7 @@ export DSH_QQ_WS_URL="ws://172.20.0.1:3001"
 export DSH_QQ_TOKEN="ONEBOT_ACCESS_TOKEN"
 export DSH_QQ_WORKSPACE="$HOME/dsh-work/qq-channel-workspace"
 export DSH_QQ_STYLE_PROMPT="$HOME/.dsh/qq-channel/contact-style.md"
-export DSH_QQ_AGENT_PRESET="router-auto"
+export DSH_QQ_AGENT_PRESET="router-standard"
 export DSH_QQ_FALLBACK_PRESETS="router-standard,standard,minimal"
 export DSH_QQ_AGENT_PROVIDER="deepseek-official"
 export DSH_QQ_AGENT_MODEL="deepseek-v4-flash-vision-exp"
@@ -564,7 +595,7 @@ unset QQ_DB_KEY
 ### 第二层：NapCat 与网络
 
 1. WebSocket Server 已启用，不是 Reverse WebSocket。
-2. dsh 在 WSL 时 Host 使用 `0.0.0.0`，端口 3001。
+2. dsh 在 WSL 时 Host 使用 WSL 默认路由显示的 Windows 主机地址，端口 3001；不要公开监听公网接口。
 3. 消息格式为 `array`，`reportSelfMessage` 关闭。
 4. 从 WSL 测试 Windows 主机的 3001 端口。
 5. 两边 OneBot Access Token 一致，且没有误用 WebUI Token。
@@ -581,6 +612,8 @@ unset QQ_DB_KEY
 5. `/状态` 只验证插件本地指令，不会创建联系人会话。
 6. 联系人发送第一条普通任务后才写入 `state.json`。
 7. `/新任务` 只解除映射，下一条普通消息才建立新会话。
+8. `/历史` 只列出当前联系人自己的 QQ 会话；数字切换必须先发送一次 `/历史`。
+9. 任务运行中 `/切换` 会被拒绝，等待当前任务结束后再试。
 
 ### 第四层：DeepSeek Harness、模型和 Agent
 
@@ -601,11 +634,20 @@ ss -ltnp | grep ':3080'
 
 ## 更新插件
 
+日常更新应保留已工作的 DSH，不要把 GitHub 源码 ZIP 当作 npm 稳定发行版直接覆盖。若主动升级 DSH，先停止 WebUI 并备份 `~/.dsh`，再在同一个 Node/npm 环境执行 `npm install --global @deepseek-ai/dsh@latest`。升级后运行：
+
+```bash
+node scripts/check-dsh-version.mjs "$(dsh --version)"
+```
+
+`0.2.0` 及更高版本会显示超出当前验证线但继续能力检测；这时必须完成 QQ 端 `/状态`、普通任务、文件回传和 `/历史` 验收。
+
 ```bash
 cd ~/dsh-qq-channel
 git pull --ff-only
 pnpm install --frozen-lockfile
 pnpm test
+pnpm prune --prod --config.auto-install-peers=false
 npx @deepseek-ai/dsh plugin --profile web add "$PWD"
 ```
 
@@ -625,6 +667,7 @@ npx @deepseek-ai/dsh plugin --profile web remove dsh-qq-channel
 - [DeepSeek Harness WebUI 使用指南](https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md)
 - [DeepSeek Harness CLI 与插件管理](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/cli/reference/README.md)
 - [NapCatQQ 官方文档](https://napneko.github.io/)
-- [NapCatQQ Desktop Releases](https://github.com/NapNeko/NapCatQQ-Desktop/releases)
+- [NapCatQQ Shell 官方教程](https://napneko.github.io/guide/boot/Shell.html)
+- [NapCatQQ Desktop 项目](https://github.com/NapNeko/NapCatQQ-Desktop)
 
 环境齐全后，日常安装/更新只需看 [`QUICKSTART.md`](QUICKSTART.md)。返回功能、QQ 指令和组件关系请看 [`README.md`](README.md)。

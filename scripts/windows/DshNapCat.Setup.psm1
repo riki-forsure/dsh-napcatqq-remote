@@ -390,7 +390,7 @@ nvm use 24
 corepack enable
 corepack prepare pnpm@latest --activate
 if ! command -v dsh >/dev/null 2>&1; then
-  npm install --global @deepseek-ai/dsh
+  npm install --global @deepseek-ai/dsh@latest
 fi
 mkdir -p "`$HOME/dsh-work/main" "`$HOME/dsh-work/qq-channel-workspace"
 if [ ! -f "`$HOME/.dsh/.agent-presets/router-standard/preset.yml" ]; then
@@ -403,8 +403,16 @@ else
   git clone '$PluginRepository' "`$repo"
 fi
 cd "`$repo"
+dsh_version="`$(dsh --version 2>/dev/null | head -n 1 || true)"
+if ! node scripts/check-dsh-version.mjs "`$dsh_version"; then
+  echo 'The installed DSH is older than the plugin compatibility floor; upgrading to the stable npm release.' >&2
+  npm install --global @deepseek-ai/dsh@latest
+  dsh_version="`$(dsh --version 2>/dev/null | head -n 1 || true)"
+  node scripts/check-dsh-version.mjs "`$dsh_version"
+fi
 CI=1 pnpm install --frozen-lockfile
 node --test
+pnpm prune --prod --config.auto-install-peers=false
 dsh plugin --profile web add "`$repo"
 "@
 }

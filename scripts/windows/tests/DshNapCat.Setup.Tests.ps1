@@ -77,6 +77,10 @@ try {
     Assert-True ($bootstrap -match 'dsh-routing-suite') 'Bootstrap should install the recommended routing suite'
     Assert-True ($bootstrap -match 'router-standard') 'Bootstrap should check for the installed router preset'
     Assert-True ($bootstrap -match 'dsh plugin --profile web add') 'Bootstrap should add plugins to the web profile'
+    Assert-True ($bootstrap -match '@deepseek-ai/dsh@latest') 'A new install should use the stable npm dist-tag instead of a GitHub source snapshot'
+    Assert-True ($bootstrap -match 'dsh --version') 'Bootstrap should report and check the active DSH version'
+    Assert-True ($bootstrap -match 'pnpm prune --prod') 'Bootstrap should remove test-only DSH API packages before linking the plugin'
+    Assert-True ($bootstrap -match 'auto-install-peers=false') 'Bootstrap should avoid a second private copy of DSH host APIs'
 
     Write-Host 'DshNapCat.Setup tests passed'
 } finally {

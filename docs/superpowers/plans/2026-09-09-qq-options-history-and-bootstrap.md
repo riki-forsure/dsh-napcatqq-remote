@@ -91,12 +91,13 @@
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 
-- [ ] Lead the README with implemented capabilities, then route readers to quick installation or the detailed tutorial.
-- [ ] Clearly distinguish NapCatQQ Shell/OneKey from NapCatQQ Desktop and explain that their interfaces and configuration paths differ.
-- [ ] Document the two desktop shortcuts, first-login boundary, local-only ports, OneBot 11 relationship, manual setup paths, and all QQ commands including history/switching.
-- [ ] Make `AGENTS.md` directly executable by an installation agent: detection order, exact commands, noninteractive steps, login handoff, resume/finalization, validation, and secrets rules.
-- [ ] Update version to `0.2.0`, lockfile metadata, and changelog.
-- [ ] Search for stale Desktop-only instructions, placeholders, personal QQ numbers, tokens, and user-specific paths.
+- [x] Lead the README with implemented capabilities, then route readers to quick installation or the detailed tutorial.
+- [x] Clearly distinguish NapCatQQ Shell/OneKey from NapCatQQ Desktop and explain that their interfaces and configuration paths differ.
+- [x] Document the two desktop shortcuts, first-login boundary, local-only ports, OneBot 11 relationship, manual setup paths, and all QQ commands including history/switching.
+- [x] Make `AGENTS.md` directly executable by an installation agent: detection order, exact commands, noninteractive steps, login handoff, resume/finalization, validation, and secrets rules.
+- [x] Update version to `0.2.0`, lockfile metadata, and changelog.
+- [x] Add DSH version/API compatibility checks and prevent source installs from shadowing the host with a private DSH API copy.
+- [x] Search for stale Desktop-only instructions, placeholders, personal QQ numbers, tokens, and user-specific paths.
 - [ ] Commit as `docs: add full-stack setup and history guide`.
 
 ## Task 6: Synchronize the installed plugin without restarting DSH
