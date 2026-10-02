@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1",
-    "ws": "^8.18.3"
+    "ws": "^8.22.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
